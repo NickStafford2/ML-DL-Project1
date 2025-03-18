@@ -26,7 +26,7 @@ def delete_temp():
         dir_contents = os.listdir(f"{temp_extraction_location}/{class_name}")
         for folder in dir_contents:
             path = f"{temp_extraction_location}/{class_name}/{folder}"
-            print(path)
+            # print(path)
             shutil.rmtree(path)
 
 def unzip():
@@ -46,11 +46,16 @@ def copy_to_temp():
         short_class_name = class_name.replace(" ", "")
         dir_contents = os.listdir(f"{temp_extraction_location}/{class_name}")
         for folder in dir_contents:
+            folder_short = folder.replace(".", "").zfill(3)
             folder_path = f"{temp_extraction_location}/{class_name}/{folder}"
             folder_contents = os.listdir(folder_path)
             for filename in folder_contents:
+                file= filename.split(".")
+                file[0] = file[0].zfill(4)
+                filename_short = ".".join(file)
+
                 old_path= os.path.join(folder_path, filename)
-                new_path= os.path.join(f"{final_extraction_location}/{class_name}", f"{short_class_name}_{folder}_{filename}")
+                new_path= os.path.join(f"{final_extraction_location}/{class_name}", f"{short_class_name}_{folder_short}_{filename_short}")
                 os.rename(old_path, new_path)
                 # os.rename("path/to/current/file.foo", "path/to/new/destination/for/file.foo")
                 # print(f"{old_path} -> {new_path}")
