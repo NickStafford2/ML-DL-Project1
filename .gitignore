@@ -1,6 +1,7 @@
 temp/
 data/
 MLDL_Data_Face/
+data.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
