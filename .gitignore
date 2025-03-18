@@ -1,3 +1,6 @@
+temp/
+data/
+MLDL_Data_Face/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
