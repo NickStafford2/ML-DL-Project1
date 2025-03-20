@@ -1,5 +1,6 @@
-from project1 import unzip, split_data
+from project1 import unzip, split_data, convereter
 
 if __name__ == "__main__":
     file_list = unzip.create_file_list()
     datasets = split_data.create_datasets(file_list)
+    convereter.convert(datasets)

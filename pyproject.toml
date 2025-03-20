@@ -2,14 +2,15 @@
 name = "project1"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "=",email = "ngstafford1@gmail.com"}
-]
+authors = [{ name = "=", email = "ngstafford1@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.12"
 dependencies = [
-    "numpy (>=2.2.4,<3.0.0)",
-    "scikit-image (>=0.25.2,<0.26.0)"
+  "numpy",
+  "tensorflow",
+  "scikit-image",
+  "opencv-python",
+  "matplotlib",
 ]
 
 

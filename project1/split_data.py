@@ -8,30 +8,30 @@ from .constants import data_folder_path, class_names, temp_folder_path, zip_fold
 
 @dataclass
 class Datasets:
-    training: list[tuple[str, str]] = field(default_factory=list)
-    validation: list[tuple[str, str]] = field(default_factory=list)
-    test: list[tuple[str, str]] = field(default_factory=list)
+    training: list[tuple[np.ndarray, str]] = field(default_factory=list)
+    validation: list[tuple[np.ndarray, str]] = field(default_factory=list)
+    test: list[tuple[np.ndarray, str]] = field(default_factory=list)
 
 
-def create_datasets(file_paths: list[tuple[str, str]]) -> Datasets:
+def create_datasets(file_paths: list[tuple[np.ndarray, str]]) -> Datasets:
     datasets = Datasets()
 
     (training_count, validation_count, test_count) = _get_set_sizes(
         len(file_paths), 0.8, 0.1, 0.1
     )
     random.shuffle(file_paths)
-    datasets.training = file_paths[:training_count]  # No need to subtract 1
-    datasets.validation = file_paths[training_count : training_count + validation_count]
-    datasets.test = file_paths[training_count + validation_count :]
+    training = file_paths[:training_count]
+    validation = file_paths[training_count : training_count + validation_count]
+    test = file_paths[training_count + validation_count :]
 
     assert (
-        len(datasets.training) == training_count
+        len(training) == training_count
     ), f"Expected {training_count}, but got {len(datasets.training)}"
     assert (
-        len(datasets.validation) == validation_count
+        len(validation) == validation_count
     ), f"Expected {validation_count}, but got {len(datasets.validation)}"
     assert (
-        len(datasets.test) == test_count
+        len(test) == test_count
     ), f"Expected {test_count}, but got {len(datasets.test)}"
 
     print(

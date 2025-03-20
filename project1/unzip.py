@@ -1,13 +1,14 @@
 import os
-import glob
-import skimage
 import shutil
-from skimage import io
-import random
 from zipfile import ZipFile
+
+import numpy as np
+
+from . import converter
+
 from .constants import (
-    data_folder_path,
     class_names,
+    data_folder_path,
     temp_folder_path,
     zip_folder_path,
 )
@@ -99,15 +100,16 @@ def _format_data():
     _delete_temp()
 
 
-def create_file_list() -> list[tuple[str, str]]:
+def create_file_list() -> list[tuple[np.ndarray, str]]:
     if not _does_data_exist():
         _format_data()
 
-    output = []
+    output: list[tuple[np.ndarray, str]] = []
     for class_name in class_names:
         class_dir = f"{data_folder_path}/{class_name}"
         dir_contents = os.listdir(class_dir)
         for filename in dir_contents:
             file_path = os.path.join(class_dir, filename)
-            output.append((file_path, class_name))
+            tensor = converter.image_path_to_tensor(file_path)
+            output.append((tensor, class_name))
     return output
