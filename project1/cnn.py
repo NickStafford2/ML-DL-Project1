@@ -98,18 +98,18 @@ def run():
 
     image_size = (244, 244)
     model = make_model(input_shape=image_size + (3,), num_classes=3)
-    keras.utils.plot_model(model, show_shapes=True)
+    keras.utils.plot_model(model, show_shapes=True, to_file="./docs/model.png")
 
-    epochs = 25
-
-    callbacks = [
-        keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras"),
-    ]
     model.compile(
         optimizer=keras.optimizers.Adam(3e-4),
         loss=keras.losses.CategoricalCrossentropy(from_logits=False),
         metrics=[keras.metrics.CategoricalAccuracy(name="acc")],
     )
+
+    # callbacks = [
+    #     keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras"),
+    # ]
+    # epochs = 25
     # model.fit(
     #     train_ds,
     #     epochs=epochs,
