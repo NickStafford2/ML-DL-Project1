@@ -14,8 +14,6 @@ class Datasets:
 
 
 def create_datasets(file_paths: list[tuple[np.ndarray, str]]) -> Datasets:
-    datasets = Datasets()
-
     (training_count, validation_count, test_count) = _get_set_sizes(
         len(file_paths), 0.8, 0.1, 0.1
     )
@@ -26,17 +24,16 @@ def create_datasets(file_paths: list[tuple[np.ndarray, str]]) -> Datasets:
 
     assert (
         len(training) == training_count
-    ), f"Expected {training_count}, but got {len(datasets.training)}"
+    ), f"Expected {training_count}, but got {len(training)}"
     assert (
         len(validation) == validation_count
-    ), f"Expected {validation_count}, but got {len(datasets.validation)}"
-    assert (
-        len(test) == test_count
-    ), f"Expected {test_count}, but got {len(datasets.test)}"
+    ), f"Expected {validation_count}, but got {len(validation)}"
+    assert len(test) == test_count, f"Expected {test_count}, but got {len(test)}"
 
     print(
-        f"created dataset with \n  {len(datasets.training)} training \n  {len(datasets.validation)} validation \n  {len(datasets.test)} test"
+        f"created dataset with \n  {len(training)} training \n  {len(validation)} validation \n  {len(test)} test"
     )
+    datasets = Datasets(training, validation, test)
     return datasets
 
 

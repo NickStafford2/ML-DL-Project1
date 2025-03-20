@@ -7,10 +7,12 @@ readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
   "numpy",
-  "tensorflow",
   "scikit-image",
   "opencv-python",
   "matplotlib",
+  "pydot (>=3.0.4,<4.0.0)",
+  "graphviz (>=0.20.3,<0.21.0)",
+  "tensorflow[and-cuda] (>=2.19.0,<3.0.0)",
 ]
 
 
