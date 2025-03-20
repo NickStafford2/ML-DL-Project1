@@ -1,9 +1,6 @@
 # import test from src
-from project1 import test, cnn, unzip
+from project1 import unzip, split_data
 
 if __name__ == "__main__":
-    # test.run()
-    # cnn.run()
-    unzip.run()
-
-
+    file_list = unzip.create_file_list()
+    datasets = split_data.create_datasets(file_list)
