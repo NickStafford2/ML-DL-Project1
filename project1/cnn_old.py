@@ -1,8 +1,20 @@
+# https://keras.io/examples/vision/image_classification_from_scratch/
+# import shutil
+# import os
 import keras
 from keras import layers
 from tensorflow import data as tf_data
 from typing import Any
+
+# import cv2
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from numpy import asarray
+# import tensorflow as tf
 from keras.utils import to_categorical
+from keras.layers import Convolution2D, MaxPooling2D, Activation, Flatten, Dense
+
+# from keras.models import Sequential
 
 from project1.split_data import Datasets
 from .constants import (
@@ -10,11 +22,29 @@ from .constants import (
 )
 
 
+def get_shape(dataset: list[Any] | Any):
+    for images, labels in dataset.take(1):
+        return images.shape
+
+    # adding a 3rd dimension for channel(grayscale) since keras expects batches of images
+    # image = datasets.training[0][0]
+    # print(image.shape)
+    # return image.shape
+    # image_batch = image.reshape(1, image.shape[0], image.shape[1], 1)
+    # image_batch.shape
+    # return image_batch.shape[1:]
+
+
+def format_data(datasets: Datasets):
+
+    x_train, y_train, x_test, y_test = None
+    return (x_train, y_train, x_test, y_test)
+
+
 data_augmentation_layers = [
     layers.RandomFlip("horizontal"),
     layers.RandomRotation(0.1),
 ]
-# use this to increase reduce size of dataset for more speed
 # data_augmentation_layers = []
 
 
@@ -22,6 +52,64 @@ def data_augmentation(images):
     for layer in data_augmentation_layers:
         images = layer(images)
     return images
+
+
+def preprocess(dataset: list[Any] | Any):
+    shape = get_shape(dataset)
+    inputs = keras.Input(shape=shape)
+    x = data_augmentation(inputs)
+    x = layers.Rescaling(1.0 / 255)(x)
+    return x
+
+
+def configure_for_performance(train_ds, val_ds):
+    # Apply `data_augmentation` to the training images.
+    train_ds = train_ds.map(
+        lambda img, label: (data_augmentation(img), label),
+        num_parallel_calls=tf_data.AUTOTUNE,
+    )
+    # Prefetching samples in GPU memory helps maximize GPU utilization.
+    train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
+    val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
+
+
+# def run(train_ds, val_ds):
+#     # x = preprocess(dataset)
+#
+#     train_ds = train_ds.map(
+#         lambda img, label: (data_augmentation(img), label),
+#         num_parallel_calls=tf_data.AUTOTUNE,
+#     )
+#     # Prefetching samples in GPU memory helps maximize GPU utilization.
+#     train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
+#     val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
+#
+#     x_train, y_train, x_test, y_test = format_data(datasets)
+#
+#     num_filters = 8  # number of conv. filters
+#     conv_filter_size1 = 3  # conv. filter size
+#     pool_size1 = 2  # pooling filter size
+#
+#     cnn_model = Sequential()
+#     cnn_model.add(
+#         Convolution2D(10, (7, 7), padding="same", input_shape=get_shape(datasets))
+#     )  # random weights initialized
+#     # input shape would be (224, 224, 1)
+#     raise Exception("intentional exception")
+#     cnn_model.add(MaxPooling2D(pool_size=pool_size1))
+#     cnn_model.add(Flatten())
+#     cnn_model.add(Dense(10, activation="softmax"))
+#     cnn_model.summary()
+#     # compile the model
+#     cnn_model.compile("adam", loss="categorical_crossentropy", metrics=["accuracy"])
+#     # train the model
+#     cnn_model.fit(
+#         x_train,
+#         so_categorical(y_train),
+#         epochs=3,
+#         verbose=1,
+#         validation_data=(x_test, to_categorical(y_test)),
+#     )
 
 
 def make_model(input_shape, num_classes):
@@ -95,7 +183,6 @@ def run():
     # Prefetching samples in GPU memory helps maximize GPU utilization.
     train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
     val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
-
     image_size = (244, 244)
     model = make_model(input_shape=image_size + (3,), num_classes=3)
     keras.utils.plot_model(model, show_shapes=True)
@@ -110,9 +197,9 @@ def run():
         loss=keras.losses.CategoricalCrossentropy(from_logits=False),
         metrics=[keras.metrics.CategoricalAccuracy(name="acc")],
     )
-    # model.fit(
-    #     train_ds,
-    #     epochs=epochs,
-    #     callbacks=callbacks,
-    #     validation_data=val_ds,
-    # )
+    model.fit(
+        train_ds,
+        epochs=epochs,
+        callbacks=callbacks,
+        validation_data=val_ds,
+    )
