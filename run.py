@@ -1,4 +1,3 @@
-# import test from src
 from project1 import unzip, split_data
 
 if __name__ == "__main__":
