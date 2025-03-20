@@ -1,3 +1,4 @@
+# https://keras.io/examples/vision/image_classification_from_scratch/
 import shutil
 import os
 import keras
