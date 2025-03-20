@@ -1,10 +1,8 @@
 import keras
 from keras import layers
 from tensorflow import data as tf_data
-from typing import Any
 from keras.utils import to_categorical
 
-from project1.split_data import Datasets
 from .constants import (
     data_folder_path,
 )
