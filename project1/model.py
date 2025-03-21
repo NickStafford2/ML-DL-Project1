@@ -14,40 +14,17 @@ def _add_separable_convolution(nn, num_filters: int):
     return nn
 
 
-def create_model(
-    input_shape: tuple[int, int, int],
-    num_classes: int = 3,
-    model_name: str = "part2",
-):
-    # Define the input layer with the specified input shape
-    inputs = keras.Input(shape=input_shape)
-
-    """ Start with a rescaling layer. This normalizes the [0-255] vlaues to [0,1]. Simply
-    divides by 255."""
-    nn = layers.Rescaling(1.0 / 255)(inputs)
-
-    """ Convolutional layer. Reduces the spatial dimensions of the input image. Since 
-    this is the first layer, we use a normal convolution instead of a separable 
-    convolution."""
-    nn = layers.Conv2D(128, 3, strides=2, padding="same")(nn)
-
-    """ We choose to do plenty of batch normalization. This is a reccomended practice, 
-    and seems to help everywhere without hurting performance much. It should help 
-    prevent overfitting and should improve generalization."""
-    nn = layers.BatchNormalization()(nn)
-    nn = layers.Activation("relu")(nn)
-
-    """ This is a more advanced technique designed to make the network less linear. The 
-    output of this convolution layer is used as an input for later layers. The idea is 
-    that by using several convolutions in combination, the network can understand what 
-    it is looking at better. """
+def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
     previous_convolution_reference = nn
 
     """ Feature refinement loop. As we progress through the network, we should be 
     identifying larger scale features of the image, shapes at the beginning and hopefully
     recognizing faces at the end. we will keep adding convolution layers which 
-    increasingly identify more features, but also look at the image at a larger scale."""
-    for num_filters in [256, 512, 728]:
+    increasingly identify more features, but also look at the image at a larger scale.
+
+    Use padding=same constantly to keep each block of the network from shrinking. We 
+    need to keep the dimensions aligned for the add at the end of the block. """
+    for num_filters in filter_sizes:
         """These two convolution layers do the primary work of identifying features
         at each layer of resolution. This is the main code block. Everything else is
         just connnection layers."""
@@ -71,18 +48,61 @@ def create_model(
         nn = layers.add([nn, residual])
         previous_convolution_reference = nn
 
+    """ One final pooling layer to extract a more features."""
     nn = layers.SeparableConv2D(filters=1024, kernel_size=3, padding="same")(nn)
     nn = layers.BatchNormalization()(nn)
     nn = layers.Activation("relu")(nn)
+    return nn
 
+
+def _initilization_layers(inputs):
+    """Start with a rescaling layer. This normalizes the [0-255] vlaues to [0,1]. Simply
+    divides by 255."""
+    nn = layers.Rescaling(1.0 / 255)(inputs)
+
+    """ Convolution layer. Use padding=same to keep dimensions consistent. Since this is 
+    the first layer, we use a normal convolution instead of a separable convolution."""
+    nn = layers.Conv2D(128, 3, strides=2, padding="same")(nn)
+
+    """ We choose to do plenty of batch normalization. This is a reccomended practice, 
+    and seems to help everywhere without hurting performance much. It should help 
+    prevent overfitting and should improve generalization."""
+    nn = layers.BatchNormalization()(nn)
+    nn = layers.Activation("relu")(nn)
+    return nn
+
+
+def _classification_layers(nn, num_classes: int):
+    """now that the features have been reduced, change the shape of the tensor from 4d to 2d:
+    (batch_size, height, width, channels) -> (batch_size, channels)"""
     nn = layers.GlobalAveragePooling2D()(nn)
-    if num_classes == 2:
-        units = 1
-    else:
-        units = num_classes
 
+    """ If the number of classes (num_classes) is 2 (i.e., binary classification), then the 
+    output layer should have a single unit, as there are only two possible outcomes 
+    (e.g., "yes" or "no"). If num_classes is more than 2 (i.e., multi-class 
+    classification), the output layer should have num_classes units, each representing a 
+    class. """
+    units = 1 if num_classes == 2 else num_classes
+
+    """ Dropout to prevent any one feature from dominating the output during training. """
     nn = layers.Dropout(0.25)(nn)
-    outputs = layers.Dense(units, activation="softmax")(nn)
+
+    """ Classification layer. We should have the features mapped by now. It is now time 
+    to categorize the image based on the features. """
+    return layers.Dense(units, activation="softmax")(nn)
+
+
+def create_model(
+    input_shape: tuple[int, int, int],
+    num_classes: int = 3,
+    model_name: str = "part2",
+):
+    inputs = keras.Input(shape=input_shape)
+
+    nn = _initilization_layers(inputs)
+    nn = _pooling_layers(nn)
+    outputs = _classification_layers(nn, num_classes)
+
     model = keras.Model(inputs, outputs)
 
     return _configure_model(model, model_name)
