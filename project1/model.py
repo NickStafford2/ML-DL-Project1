@@ -7,46 +7,55 @@ def create_model(
     num_classes: int = 3,
     model_name: str = "part2",
 ):
+    # Define the input layer with the specified input shape
     inputs = keras.Input(shape=input_shape)
 
-    # Entry block
-    x = layers.Rescaling(1.0 / 255)(inputs)
-    x = layers.Conv2D(128, 3, strides=2, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    # start with a rescaling layer. This normalizes the [0-255] vlaues to [0,1]. Simply
+    # divides by 255.
+    nn = layers.Rescaling(1.0 / 255)(inputs)
 
-    previous_block_activation = x  # Set aside residual
+    # Convolutional layer. Reduces the spatial dimensions of the input image.
+    nn = layers.Conv2D(128, 3, strides=2, padding="same")(nn)
+    nn = layers.BatchNormalization()(nn)
+    nn = layers.Activation("relu")(nn)
+
+    """ This is a more advanced technique designed to make the network less linear. The 
+    output of this convolution layer is used as an input for later layers. The idea is 
+    that by using several convolutions in combination, the network can understand what 
+    it is looking at better. 
+    """
+    first_convolution_reference = nn
 
     for size in [256, 512, 728]:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        nn = layers.Activation("relu")(nn)
+        nn = layers.SeparableConv2D(size, 3, padding="same")(nn)
+        nn = layers.BatchNormalization()(nn)
 
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        nn = layers.Activation("relu")(nn)
+        nn = layers.SeparableConv2D(size, 3, padding="same")(nn)
+        nn = layers.BatchNormalization()(nn)
 
-        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+        nn = layers.MaxPooling2D(3, strides=2, padding="same")(nn)
 
         # Project residual
         residual = layers.Conv2D(size, 1, strides=2, padding="same")(
-            previous_block_activation
+            first_convolution_reference
         )
-        x = layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
+        nn = layers.add([nn, residual])  # Add back residual
+        first_convolution_reference = nn  # Set aside next residual
 
-    x = layers.SeparableConv2D(1024, 3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    nn = layers.SeparableConv2D(1024, 3, padding="same")(nn)
+    nn = layers.BatchNormalization()(nn)
+    nn = layers.Activation("relu")(nn)
 
-    x = layers.GlobalAveragePooling2D()(x)
+    nn = layers.GlobalAveragePooling2D()(nn)
     if num_classes == 2:
         units = 1
     else:
         units = num_classes
 
-    x = layers.Dropout(0.25)(x)
-    outputs = layers.Dense(units, activation="softmax")(x)
+    nn = layers.Dropout(0.25)(nn)
+    outputs = layers.Dense(units, activation="softmax")(nn)
     model = keras.Model(inputs, outputs)
 
     return _configure_model(model, model_name)
