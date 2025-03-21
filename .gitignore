@@ -2,6 +2,7 @@ temp/
 data/
 MLDL_Data_Face/
 data.zip
+save_at_*.keras
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
