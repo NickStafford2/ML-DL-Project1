@@ -89,16 +89,12 @@ def _copy_to_data():
                 os.rename(old_path, new_path)
 
 
-def _format_data():
+def generate_data_from_zip():  # -> list[tuple[np.ndarray, str]]:
+    if _does_data_exist():
+        return
     _setup_folders()
     _delete_temp()
     _delete_data_contents()
     _unzip_to_temp()
     _copy_to_data()
     _delete_temp()
-
-
-def create_all_data(limit: int = 99999999999):  # -> list[tuple[np.ndarray, str]]:
-    limit = math.floor(limit / len(class_names))
-    if not _does_data_exist():
-        _format_data()
