@@ -5,6 +5,7 @@ data.zip
 emotion_data/
 tuner_results/
 keras_cache/
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
