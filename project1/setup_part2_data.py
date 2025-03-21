@@ -28,21 +28,21 @@ def _does_data_exist(paths: FolderPaths) -> bool:
     return True
 
 
-def _setup_temp_folder(paths: FolderPaths):
+def _setup_folders(paths: FolderPaths):
     _delete_temp()
     if not os.path.exists(_temp_folder_path):
         os.makedirs(_temp_folder_path)
-    if not os.path.exists(_temp_folder_path):
-        os.makedirs(_temp_folder_path)
+
     for class_name in class_names:
         if not os.path.exists(f"{_temp_folder_path}/{class_name}"):
             os.makedirs(f"{_temp_folder_path}/{class_name}")
 
-    if not os.path.exists(paths.training_folder_path):
-        os.makedirs(paths.training_folder_path)
-    for class_name in class_names:
-        if not os.path.exists(f"{paths.training_folder_path}/{class_name}"):
-            os.makedirs(f"{paths.training_folder_path}/{class_name}")
+        class_folder = f"{paths.training_folder_path}/{class_name}"
+        if not os.path.exists(class_folder):
+            os.makedirs(class_folder)
+        class_folder = f"{paths.test_folder_path}/{class_name}"
+        if not os.path.exists(class_folder):
+            os.makedirs(class_folder)
 
 
 def _delete_training_contents(paths: FolderPaths):
@@ -51,7 +51,6 @@ def _delete_training_contents(paths: FolderPaths):
         dir_contents = os.listdir(class_dir)
         for filename in dir_contents:
             file_path = os.path.join(class_dir, filename)
-            # print(file_path)
             os.remove(file_path)
 
 
@@ -66,7 +65,6 @@ def _unzip_to_temp():
         for zippedFile in dir_contents:
             if zippedFile.__contains__(".zip"):
                 zippedFileNameNoExtension = zippedFile[:2]
-                # print(zippedFileNameNoExtension)
                 with ZipFile(f"{zip_folder_path}/{class_name}/{zippedFile}", "r") as z:
                     z.extractall(
                         f"{_temp_folder_path}/{class_name}/{zippedFileNameNoExtension}"
@@ -97,7 +95,7 @@ def _copy_to_training(paths: FolderPaths):
 def generate_data_from_zip(paths: FolderPaths):
     if _does_data_exist(paths):
         return
-    _setup_temp_folder(paths)
+    _setup_folders(paths)
     _delete_training_contents(paths)
     _unzip_to_temp()
     _copy_to_training(paths)

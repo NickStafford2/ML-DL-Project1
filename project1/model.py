@@ -86,7 +86,7 @@ def _classification_layers(hp, nn, num_classes: int):
     )(nn)
 
     # Number of Dense layers will be decided by the hyperparameter
-    num_dense_layers = hp.Int("num_dense_layers", min_value=1, max_value=5)
+    # num_dense_layers = hp.Int("num_dense_layers", min_value=1, max_value=5)
 
     # Define the max size for the first dense layer based on the flattened image size
     flattened_size = nn.shape[1]
