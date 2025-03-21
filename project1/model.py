@@ -8,8 +8,8 @@ from keras import layers
 def _add_separable_convolution(nn, num_filters: int):
     nn = layers.Activation("relu")(nn)
     """ This is a more efficient version of a standard convolution layer. It does 
-    a convolution for each rgb channel independently, and then merges the three 
-    outputs together for a single output. 
+    a convolution for each rgb channel independently, and then applies a 1x1 pointwise 
+    convolution and then merges the three outputs together for a single output. 
     Great explanation here: https://www.youtube.com/watch?v=T7o3xvJLuHk
     """
     nn = layers.SeparableConv2D(filters=num_filters, kernel_size=3, padding="same")(nn)
@@ -17,7 +17,7 @@ def _add_separable_convolution(nn, num_filters: int):
     return nn
 
 
-def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
+def _pooling_layers(hp, nn, filter_sizes=[256, 512, 728]):
     previous_convolution_reference = nn
 
     """ Feature refinement loop. As we progress through the network, we should be 
@@ -38,7 +38,6 @@ def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
         improve performance and identify larger scale features on the next layer."""
         nn = layers.MaxPooling2D(pool_size=3, strides=2, padding="same")(nn)
 
-        # Project residual
         """ Use a 1x1 convolution so that the number of filters of the previous residual
         layer is the same as the current layer. 1x1 keeps the spacial dimensions the 
         same, while adding to the number of channels. 2 strides means the feature map is
@@ -51,7 +50,7 @@ def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
         nn = layers.add([nn, residual])
         previous_convolution_reference = nn
 
-    """ One final pooling layer to extract a more features."""
+    """ One final pooling layer to extract more features."""
     nn = layers.SeparableConv2D(filters=1024, kernel_size=3, padding="same")(nn)
     nn = layers.BatchNormalization()(nn)
     nn = layers.Activation("relu")(nn)
@@ -59,7 +58,7 @@ def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
 
 
 def _initialization_layers(inputs):
-    """Start with a rescaling layer. This normalizes the [0-255] vlaues to [0,1]. Simply
+    """Start with a rescaling layer. This normalizes the [0-255] values to [0,1]. Simply
     divides by 255."""
     nn = layers.Rescaling(1.0 / 255)(inputs)
 
@@ -67,7 +66,7 @@ def _initialization_layers(inputs):
     the first layer, we use a normal convolution instead of a separable convolution."""
     nn = layers.Conv2D(filters=128, kernel_size=3, strides=2, padding="same")(nn)
 
-    """ We choose to do plenty of batch normalization. This is a reccomended practice, 
+    """ We choose to do plenty of batch normalization. This is a recommended practice, 
     and seems to help everywhere without hurting performance much. It should help 
     prevent overfitting and should improve generalization."""
     nn = layers.BatchNormalization()(nn)
@@ -78,13 +77,24 @@ def _initialization_layers(inputs):
 def _classification_layers(hp, nn, num_classes: int):
     """Flatten the tensor to prepare it for dense layers
     (batch_size, height, width, channels) -> (batch_size, features)"""
-    nn = layers.Flatten()(nn)  # Flatten the 4D tensor to 2D (batch_size, features)
+
+    pooling_method = hp.Choice(
+        "pooling_method", values=["flatten", "global_avg_pooling"], default="flatten"
+    )
+    if pooling_method == "flatten":
+        nn = layers.Flatten()(nn)
+    elif pooling_method == "global_avg_pooling":
+        nn = layers.GlobalAveragePooling2D()(nn)
 
     nn = layers.Dense(
-        120,
+        520,
         activation="relu",
     )(nn)
 
+    nn = layers.Dense(
+        220,
+        activation="relu",
+    )(nn)
     # Number of Dense layers will be decided by the hyperparameter
     # num_dense_layers = hp.Int("num_dense_layers", min_value=1, max_value=5)
 
@@ -95,17 +105,14 @@ def _classification_layers(hp, nn, num_classes: int):
     # max_layer_size = flattened_size // 2
 
     """ Dropout to prevent any one feature from dominating the output during training. """
-    if hp.Boolean("dropout"):
-        nn = layers.Dropout(0.25)(nn)
-
-    nn = layers.Dense(
-        40,
-        activation="relu",
-    )(nn)
-    nn = layers.Dense(
-        10,
-        activation="relu",
-    )(nn)
+    dropout_rate = hp.Float("dropout_rate", min_value=0.15, max_value=0.45, step=0.05)
+    nn = layers.Dropout(dropout_rate)(nn)
+    num_dense_layers = hp.Int("num_dense_layers", min_value=3, max_value=15)
+    for _ in range(num_dense_layers):
+        nn = layers.Dense(
+            80,
+            activation="relu",
+        )(nn)
     # last_dense_layer_size = min(num_classes * 2, flattened_size - 1)
     # For each dense layer, create a new Dense layer with decreasing units
     # for i in range(num_dense_layers):
@@ -141,7 +148,7 @@ def create_model(
     inputs = keras.Input(shape=input_shape)
 
     nn = _initialization_layers(inputs)
-    nn = _pooling_layers(nn)
+    nn = _pooling_layers(hp, nn)
     outputs = _classification_layers(hp, nn, num_classes)
 
     model = keras.Model(inputs, outputs)
@@ -151,8 +158,7 @@ def create_model(
 
 def _configure_model(hp, model, model_name):
     keras.utils.plot_model(model, show_shapes=True, to_file=f"./docs/{model_name}.png")
-    learning_rate = 3e-4
-    # learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log")
+    learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-3, sampling="log")
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
         loss=keras.losses.CategoricalCrossentropy(from_logits=False),

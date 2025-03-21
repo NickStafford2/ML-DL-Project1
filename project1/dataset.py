@@ -20,14 +20,16 @@ def _data_augmentation(images):
     return images
 
 
-def create_datasets(test_data_path: str, num_classes: int, image_size: tuple[int, int]):
+def create_datasets(
+    training_data_path: str, num_classes: int, image_size: tuple[int, int]
+):
     train_ds, val_ds = keras.utils.image_dataset_from_directory(
-        test_data_path,
+        training_data_path,
         validation_split=0.2,
         subset="both",
         seed=1337,
         image_size=image_size,
-        batch_size=32,
+        batch_size=16,
     )
 
     train_ds = train_ds.map(

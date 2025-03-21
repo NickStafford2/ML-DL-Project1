@@ -1,6 +1,7 @@
 import keras
 from keras.models import load_model
 import keras_tuner
+import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from .dataset import create_datasets
@@ -48,14 +49,21 @@ def _get_best_model(tuner, train_ds, val_ds, use_cache: bool):
 def _train(model, train_ds, val_ds):
     callbacks = [
         keras.callbacks.ModelCheckpoint("keras_cache/save_at_{epoch}.keras"),
+        keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=3,
+            restore_best_weights=True,
+        ),
+        keras.callbacks.TensorBoard(log_dir="./logs", profile_batch=50),
     ]
-    epochs = 3  # 25
-    history = model.fit(
-        train_ds,
-        epochs=epochs,
-        callbacks=callbacks,
-        validation_data=val_ds,
-    )
+    epochs = 20  # 25
+    with tf.profiler.experimental.Profile("./logs"):
+        history = model.fit(
+            train_ds,
+            epochs=epochs,
+            callbacks=callbacks,
+            validation_data=val_ds,
+        )
     return history
 
 
@@ -90,8 +98,8 @@ def run(
     tuner = keras_tuner.RandomSearch(
         hypermodel=MyHyperModel(model_name, input_channels, num_classes, image_size),
         objective="val_accuracy",
-        max_trials=3,
-        executions_per_trial=2,
+        max_trials=10,
+        executions_per_trial=3,
         overwrite=True,
         directory="tuner_results",
         project_name=model_name,
