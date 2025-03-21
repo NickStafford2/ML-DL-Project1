@@ -9,5 +9,5 @@ if __name__ == "__main__":
         training_folder_path=paths.training_folder_path,
         image_size=(48, 48),
         num_classes=7,
-        # use_cache=True,
+        use_cache=True,
     )

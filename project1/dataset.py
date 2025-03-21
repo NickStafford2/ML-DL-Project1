@@ -29,9 +29,10 @@ def create_datasets(
         subset="both",
         seed=1337,
         image_size=image_size,
-        batch_size=16,
+        batch_size=24,
     )
 
+    # print(f"size train_ds: {len(train_ds)}")
     train_ds = train_ds.map(
         lambda img, label: (
             _data_augmentation(img),
@@ -39,6 +40,7 @@ def create_datasets(
         ),
         num_parallel_calls=tf_data.AUTOTUNE,
     )
+    # print(f"size train_ds: {len(train_ds)}")
     val_ds = val_ds.map(
         lambda img, label: (
             _data_augmentation(img),
