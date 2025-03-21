@@ -4,6 +4,7 @@ MLDL_Data_Face/
 data.zip
 save_at_*.keras
 emotion_data/
+tuner_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
