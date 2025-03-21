@@ -73,43 +73,42 @@ def configure_for_performance(train_ds, val_ds):
     val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
 
 
-# def run(train_ds, val_ds):
-#     # x = preprocess(dataset)
-#
-#     train_ds = train_ds.map(
-#         lambda img, label: (data_augmentation(img), label),
-#         num_parallel_calls=tf_data.AUTOTUNE,
-#     )
-#     # Prefetching samples in GPU memory helps maximize GPU utilization.
-#     train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
-#     val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
-#
-#     x_train, y_train, x_test, y_test = format_data(datasets)
-#
-#     num_filters = 8  # number of conv. filters
-#     conv_filter_size1 = 3  # conv. filter size
-#     pool_size1 = 2  # pooling filter size
-#
-#     cnn_model = Sequential()
-#     cnn_model.add(
-#         Convolution2D(10, (7, 7), padding="same", input_shape=get_shape(datasets))
-#     )  # random weights initialized
-#     # input shape would be (224, 224, 1)
-#     raise Exception("intentional exception")
-#     cnn_model.add(MaxPooling2D(pool_size=pool_size1))
-#     cnn_model.add(Flatten())
-#     cnn_model.add(Dense(10, activation="softmax"))
-#     cnn_model.summary()
-#     # compile the model
-#     cnn_model.compile("adam", loss="categorical_crossentropy", metrics=["accuracy"])
-#     # train the model
-#     cnn_model.fit(
-#         x_train,
-#         so_categorical(y_train),
-#         epochs=3,
-#         verbose=1,
-#         validation_data=(x_test, to_categorical(y_test)),
-#     )
+def run_old(train_ds, val_ds):
+    # x = preprocess(dataset)
+
+    train_ds = train_ds.map(
+        lambda img, label: (data_augmentation(img), label),
+        num_parallel_calls=tf_data.AUTOTUNE,
+    )
+    # Prefetching samples in GPU memory helps maximize GPU utilization.
+    train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
+    val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
+
+    x_train, y_train, x_test, y_test = format_data(datasets)
+
+    num_filters = 8  # number of conv. filters
+    conv_filter_size1 = 3  # conv. filter size
+    pool_size1 = 2  # pooling filter size
+
+    cnn_model = Sequential()
+    cnn_model.add(
+        Convolution2D(10, (7, 7), padding="same", input_shape=get_shape(datasets))
+    )  # random weights initialized
+    # input shape would be (224, 224, 1)
+    cnn_model.add(MaxPooling2D(pool_size=pool_size1))
+    cnn_model.add(Flatten())
+    cnn_model.add(Dense(10, activation="softmax"))
+    cnn_model.summary()
+    # compile the model
+    cnn_model.compile("adam", loss="categorical_crossentropy", metrics=["accuracy"])
+    # train the model
+    cnn_model.fit(
+        x_train,
+        to_categorical(y_train),
+        epochs=3,
+        verbose=1,
+        validation_data=(x_test, to_categorical(y_test)),
+    )
 
 
 def make_model(input_shape, num_classes):

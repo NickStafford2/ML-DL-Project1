@@ -6,7 +6,7 @@ from .model import create_model
 
 def _train(model, train_ds, val_ds):
     callbacks = [
-        keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras"),
+        keras.callbacks.ModelCheckpoint("keras_cache/save_at_{epoch}.keras"),
     ]
     epochs = 25
     model.fit(
