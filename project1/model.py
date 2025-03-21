@@ -55,7 +55,7 @@ def _pooling_layers(nn, filter_sizes=[256, 512, 728]):
     return nn
 
 
-def _initilization_layers(inputs):
+def _initialization_layers(inputs):
     """Start with a rescaling layer. This normalizes the [0-255] vlaues to [0,1]. Simply
     divides by 255."""
     nn = layers.Rescaling(1.0 / 255)(inputs)
@@ -99,7 +99,7 @@ def create_model(
 ):
     inputs = keras.Input(shape=input_shape)
 
-    nn = _initilization_layers(inputs)
+    nn = _initialization_layers(inputs)
     nn = _pooling_layers(nn)
     outputs = _classification_layers(nn, num_classes)
 
