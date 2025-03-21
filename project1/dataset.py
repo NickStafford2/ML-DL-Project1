@@ -31,7 +31,7 @@ def create_datasets():
         subset="both",
         seed=1337,
         image_size=(244, 244),
-        batch_size=32,
+        batch_size=16,
     )
 
     train_ds = train_ds.map(
