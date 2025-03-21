@@ -52,12 +52,12 @@ def _train(model, train_ds, val_ds, cache_dir: str):
         keras.callbacks.ModelCheckpoint(f"{cache_dir}/save_at_{{epoch}}.keras"),
         keras.callbacks.EarlyStopping(
             monitor="val_loss",
-            patience=100,
+            patience=5,
             restore_best_weights=True,
         ),
         keras.callbacks.TensorBoard(log_dir=log_dir, profile_batch=50),
     ]
-    epochs = 125  # 25
+    epochs = 25
     with tf.profiler.experimental.Profile(log_dir):
         history = model.fit(
             train_ds,

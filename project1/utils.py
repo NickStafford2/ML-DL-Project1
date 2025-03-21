@@ -1,6 +1,19 @@
+import argparse
 import os
 import shutil
 import random
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run the CNN model with options.")
+
+    parser.add_argument(
+        "--use_cache",
+        type=bool,
+        default=True,
+        help="Set to False if you want to disable caching (default is True).",
+    )
+    return parser.parse_args()
 
 
 def move_random_files(src_dir, dest_dir, percentage: int = 10):
