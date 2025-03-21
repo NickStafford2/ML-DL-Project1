@@ -62,7 +62,7 @@ def _initialization_layers(inputs):
 
     """ Convolution layer. Use padding=same to keep dimensions consistent. Since this is 
     the first layer, we use a normal convolution instead of a separable convolution."""
-    nn = layers.Conv2D(128, 3, strides=2, padding="same")(nn)
+    nn = layers.Conv2D(filters=128, kernel_size=3, strides=2, padding="same")(nn)
 
     """ We choose to do plenty of batch normalization. This is a reccomended practice, 
     and seems to help everywhere without hurting performance much. It should help 

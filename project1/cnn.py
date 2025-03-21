@@ -8,7 +8,7 @@ def _train(model, train_ds, val_ds):
     callbacks = [
         keras.callbacks.ModelCheckpoint("keras_cache/save_at_{epoch}.keras"),
     ]
-    epochs = 25
+    epochs = 3  # 25
     model.fit(
         train_ds,
         epochs=epochs,
