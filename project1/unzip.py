@@ -3,9 +3,6 @@ import shutil
 import math
 from zipfile import ZipFile
 
-import numpy as np
-
-from . import converter
 
 from .constants import (
     class_names,
@@ -105,17 +102,3 @@ def create_all_data(limit: int = 99999999999):  # -> list[tuple[np.ndarray, str]
     limit = math.floor(limit / len(class_names))
     if not _does_data_exist():
         _format_data()
-
-    # output: list[tuple[np.ndarray, str]] = []
-    # for class_name in class_names:
-    #     class_dir = f"{data_folder_path}/{class_name}"
-    #     dir_contents = os.listdir(class_dir)
-    #     count = 0
-    #     for filename in dir_contents:
-    #         count += 1
-    #         if count > limit:
-    #             break
-    #         file_path = os.path.join(class_dir, filename)
-    #         tensor = converter.image_path_to_tensor(file_path)
-    #         output.append((tensor, class_name))
-    # return output
