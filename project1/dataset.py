@@ -20,27 +20,27 @@ def _data_augmentation(images):
     return images
 
 
-def create_datasets(test_data_path: str):
+def create_datasets(test_data_path: str, num_classes: int, image_size: tuple[int, int]):
     train_ds, val_ds = keras.utils.image_dataset_from_directory(
         test_data_path,
         validation_split=0.2,
         subset="both",
         seed=1337,
-        image_size=(244, 244),
+        image_size=image_size,
         batch_size=32,
     )
 
     train_ds = train_ds.map(
         lambda img, label: (
             _data_augmentation(img),
-            to_categorical(label, num_classes=3),
+            to_categorical(label, num_classes),
         ),
         num_parallel_calls=tf_data.AUTOTUNE,
     )
     val_ds = val_ds.map(
         lambda img, label: (
             _data_augmentation(img),
-            to_categorical(label, num_classes=3),
+            to_categorical(label, num_classes),
         ),
         num_parallel_calls=tf_data.AUTOTUNE,
     )

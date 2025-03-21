@@ -81,9 +81,9 @@ class MyHyperModel(keras_tuner.HyperModel):
 def run(
     model_name: str,
     training_folder_path: str,
+    image_size: tuple[int, int],
+    num_classes: int,
     input_channels: int = 3,
-    image_size: tuple[int, int] = (244, 244),
-    num_classes: int = 3,
     use_cache: bool = False,
 ):
 
@@ -96,7 +96,7 @@ def run(
         directory="tuner_results",
         project_name=model_name,
     )
-    (train_ds, val_ds) = create_datasets(training_folder_path)
+    (train_ds, val_ds) = create_datasets(training_folder_path, num_classes, image_size)
 
     best_model = _get_best_model(tuner, train_ds, val_ds, use_cache)
 

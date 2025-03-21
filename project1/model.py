@@ -89,10 +89,10 @@ def _classification_layers(hp, nn, num_classes: int):
     # num_dense_layers = hp.Int("num_dense_layers", min_value=1, max_value=5)
 
     # Define the max size for the first dense layer based on the flattened image size
-    flattened_size = nn.shape[1]
+    # flattened_size = nn.shape[1]
 
     # The first layer size starts with the max size, and then we scale down as we go deeper
-    max_layer_size = flattened_size // 2
+    # max_layer_size = flattened_size // 2
 
     """ Dropout to prevent any one feature from dominating the output during training. """
     if hp.Boolean("dropout"):
@@ -106,7 +106,7 @@ def _classification_layers(hp, nn, num_classes: int):
         10,
         activation="relu",
     )(nn)
-    last_dense_layer_size = min(num_classes * 2, flattened_size - 1)
+    # last_dense_layer_size = min(num_classes * 2, flattened_size - 1)
     # For each dense layer, create a new Dense layer with decreasing units
     # for i in range(num_dense_layers):
     #     layer_size = last_dense_layer_size + math.floor(
