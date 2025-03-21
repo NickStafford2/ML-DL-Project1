@@ -1,5 +1,6 @@
 import os
 import shutil
+from project1 import utils
 
 from project1.constants import FolderPaths
 
@@ -76,9 +77,17 @@ def _setup_folders(paths: FolderPaths):
             os.makedirs(class_folder)
 
 
+def _create_test_data(paths: FolderPaths):
+    for class_name in _class_names:
+        src_dir = f"{paths.training_folder_path}/{class_name}"
+        dest_dir = f"{paths.test_folder_path}/{class_name}"
+        utils.move_random_files(src_dir, dest_dir)
+
+
 def generate_data_from_zip(paths: FolderPaths):
     if _does_data_exist(paths):
         return
     _setup_folders(paths)
     _delete_training_contents(paths)
     _copy_to_training(paths)
+    _create_test_data(paths)
