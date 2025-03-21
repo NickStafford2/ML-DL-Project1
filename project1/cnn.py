@@ -33,31 +33,32 @@ def plot_training_history(history):
     plt.show()
 
 
-def _get_best_model(tuner, train_ds, val_ds, use_cache: bool):
-    cache_file_path = "keras_cache/best_model.keras"
+def _get_best_model(tuner, train_ds, val_ds, use_cache: bool, cache_dir: str):
+    best_model_file_path = f"{cache_dir}/best_model.keras"
     if use_cache:
-        return load_model(cache_file_path)
+        return load_model(best_model_file_path)
 
     tuner.search(train_ds, epochs=3, validation_data=val_ds)
 
     best_model = tuner.get_best_models(1)[0]
     best_model.summary()
-    best_model.save(cache_file_path)
+    best_model.save(best_model_file_path)
     return best_model
 
 
-def _train(model, train_ds, val_ds):
+def _train(model, train_ds, val_ds, cache_dir: str):
+    log_dir = f"{cache_dir}/logs"
     callbacks = [
-        keras.callbacks.ModelCheckpoint("keras_cache/save_at_{epoch}.keras"),
+        keras.callbacks.ModelCheckpoint(f"{cache_dir}/save_at_{{epoch}}.keras"),
         keras.callbacks.EarlyStopping(
             monitor="val_loss",
             patience=3,
             restore_best_weights=True,
         ),
-        keras.callbacks.TensorBoard(log_dir="./logs", profile_batch=50),
+        keras.callbacks.TensorBoard(log_dir=log_dir, profile_batch=50),
     ]
-    epochs = 20  # 25
-    with tf.profiler.experimental.Profile("./logs"):
+    epochs = 25  # 25
+    with tf.profiler.experimental.Profile(log_dir):
         history = model.fit(
             train_ds,
             epochs=epochs,
@@ -94,6 +95,7 @@ def run(
     input_channels: int = 3,
     use_cache: bool = False,
 ):
+    cache_dir = f"./tuner_results/{model_name}"
 
     tuner = keras_tuner.RandomSearch(
         hypermodel=MyHyperModel(model_name, input_channels, num_classes, image_size),
@@ -101,13 +103,15 @@ def run(
         max_trials=10,
         executions_per_trial=3,
         overwrite=True,
-        directory="tuner_results",
+        directory=cache_dir,
         project_name=model_name,
     )
     (train_ds, val_ds) = create_datasets(training_folder_path, num_classes, image_size)
 
-    best_model = _get_best_model(tuner, train_ds, val_ds, use_cache)
+    best_model = _get_best_model(
+        tuner, train_ds, val_ds, use_cache, cache_dir=cache_dir
+    )
 
     print("Hyperparameters optimized. Training data with best model.")
-    history = _train(best_model, train_ds, val_ds)
+    history = _train(best_model, train_ds, val_ds, cache_dir)
     plot_training_history(history)
