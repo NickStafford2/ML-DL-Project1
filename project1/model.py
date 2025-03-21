@@ -1,4 +1,6 @@
 import keras
+from tensorboard.data.provider import Hyperparameter
+import keras_tuner
 from keras import layers
 
 
@@ -72,7 +74,7 @@ def _initialization_layers(inputs):
     return nn
 
 
-def _classification_layers(nn, num_classes: int):
+def _classification_layers(hp, nn, num_classes: int):
     """now that the features have been reduced, change the shape of the tensor from 4d to 2d:
     (batch_size, height, width, channels) -> (batch_size, channels)"""
     nn = layers.GlobalAveragePooling2D()(nn)
@@ -85,7 +87,8 @@ def _classification_layers(nn, num_classes: int):
     units = 1 if num_classes == 2 else num_classes
 
     """ Dropout to prevent any one feature from dominating the output during training. """
-    nn = layers.Dropout(0.25)(nn)
+    if hp.Boolean("dropout"):
+        nn = layers.Dropout(0.25)(nn)
 
     """ Classification layer. We should have the features mapped by now. It is now time 
     to categorize the image based on the features. """
@@ -93,6 +96,7 @@ def _classification_layers(nn, num_classes: int):
 
 
 def create_model(
+    hp: Hyperparameter,
     input_shape: tuple[int, int, int],
     num_classes: int = 3,
     model_name: str = "part2",
@@ -101,18 +105,20 @@ def create_model(
 
     nn = _initialization_layers(inputs)
     nn = _pooling_layers(nn)
-    outputs = _classification_layers(nn, num_classes)
+    outputs = _classification_layers(hp, nn, num_classes)
 
     model = keras.Model(inputs, outputs)
 
-    return _configure_model(model, model_name)
+    return _configure_model(hp, model, model_name)
 
 
-def _configure_model(model, model_name):
+def _configure_model(hp, model, model_name):
     keras.utils.plot_model(model, show_shapes=True, to_file=f"./docs/{model_name}.png")
+    learning_rate = 3e-4
+    # learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log")
     model.compile(
-        optimizer=keras.optimizers.Adam(3e-4),
+        optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
         loss=keras.losses.CategoricalCrossentropy(from_logits=False),
-        metrics=[keras.metrics.CategoricalAccuracy(name="acc")],
+        metrics=[keras.metrics.CategoricalAccuracy(name="accuracy")],
     )
     return model
