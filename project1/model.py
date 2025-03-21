@@ -1,4 +1,5 @@
 import keras
+import math
 from tensorboard.data.provider import Hyperparameter
 import keras_tuner
 from keras import layers
@@ -75,20 +76,56 @@ def _initialization_layers(inputs):
 
 
 def _classification_layers(hp, nn, num_classes: int):
-    """now that the features have been reduced, change the shape of the tensor from 4d to 2d:
-    (batch_size, height, width, channels) -> (batch_size, channels)"""
-    nn = layers.GlobalAveragePooling2D()(nn)
+    """Flatten the tensor to prepare it for dense layers
+    (batch_size, height, width, channels) -> (batch_size, features)"""
+    nn = layers.Flatten()(nn)  # Flatten the 4D tensor to 2D (batch_size, features)
 
+    nn = layers.Dense(
+        120,
+        activation="relu",
+    )(nn)
+
+    # Number of Dense layers will be decided by the hyperparameter
+    num_dense_layers = hp.Int("num_dense_layers", min_value=1, max_value=5)
+
+    # Define the max size for the first dense layer based on the flattened image size
+    flattened_size = nn.shape[1]
+
+    # The first layer size starts with the max size, and then we scale down as we go deeper
+    max_layer_size = flattened_size // 2
+
+    """ Dropout to prevent any one feature from dominating the output during training. """
+    if hp.Boolean("dropout"):
+        nn = layers.Dropout(0.25)(nn)
+
+    nn = layers.Dense(
+        40,
+        activation="relu",
+    )(nn)
+    nn = layers.Dense(
+        10,
+        activation="relu",
+    )(nn)
+    last_dense_layer_size = min(num_classes * 2, flattened_size - 1)
+    # For each dense layer, create a new Dense layer with decreasing units
+    # for i in range(num_dense_layers):
+    #     layer_size = last_dense_layer_size + math.floor(
+    #         (i + 1) / num_dense_layers * (max_layer_size - last_dense_layer_size)
+    #     )
+    #     # Calculate the number of units for this layer, decreasing progressively
+    #     units = max(
+    #         max_layer_size // (i + 1), num_classes
+    #     )  # Make sure it doesn't go below num_classes
+    #     nn = layers.Dense(
+    #         layer_size,
+    #         activation="relu",
+    #     )(nn)
     """ If the number of classes (num_classes) is 2 (i.e., binary classification), then the 
     output layer should have a single unit, as there are only two possible outcomes 
     (e.g., "yes" or "no"). If num_classes is more than 2 (i.e., multi-class 
     classification), the output layer should have num_classes units, each representing a 
     class. """
     units = 1 if num_classes == 2 else num_classes
-
-    """ Dropout to prevent any one feature from dominating the output during training. """
-    if hp.Boolean("dropout"):
-        nn = layers.Dropout(0.25)(nn)
 
     """ Classification layer. We should have the features mapped by now. It is now time 
     to categorize the image based on the features. """

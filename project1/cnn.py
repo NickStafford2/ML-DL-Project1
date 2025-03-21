@@ -12,8 +12,8 @@ def plot_training_history(history):
     plt.figure(figsize=(12, 6))
 
     plt.subplot(1, 2, 1)
-    plt.plot(history.history["acc"], label="Training Accuracy")
-    plt.plot(history.history["val_acc"], label="Validation Accuracy")
+    plt.plot(history.history["accuracy"], label="Training Accuracy")
+    plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
     plt.title("Model Accuracy")
     plt.xlabel("Epochs")
     plt.ylabel("Accuracy")
@@ -33,7 +33,7 @@ def plot_training_history(history):
 
 
 def _get_best_model(tuner, train_ds, val_ds, use_cache: bool):
-    cache_file_path = "keras_cache/best_model.h5"
+    cache_file_path = "keras_cache/best_model.keras"
     if use_cache:
         return load_model(cache_file_path)
 
@@ -60,36 +60,35 @@ def _train(model, train_ds, val_ds):
 
 
 class MyHyperModel(keras_tuner.HyperModel):
-    def __init__(self, model_name, channels, num_classes, image_size) -> None:
-        self.model_name = model_name
-        self.channels = channels
-        self.num_classes = num_classes
-        self.image_size = image_size
-
+    def __init__(self, model_name, input_channels, num_classes, image_size) -> None:
+        self._model_name = model_name
+        self._input_channels = input_channels
+        self._num_classes = num_classes
+        self._image_size = image_size
         super().__init__()
 
     def build(self, hp):
-
         # Tune hyperparameters inside `create_model` using Keras Tuner's `HyperParameters` object
         model = create_model(
             hp,
-            input_shape=self.image_size + (self.channels,),
-            num_classes=self.num_classes,
-            model_name=self.model_name,
+            input_shape=self._image_size + (self._input_channels,),
+            num_classes=self._num_classes,
+            model_name=self._model_name,
         )
         return model
 
 
 def run(
-    model_name: str = "part2",
-    channels: int = 3,
+    model_name: str,
+    training_folder_path: str,
+    input_channels: int = 3,
     image_size: tuple[int, int] = (244, 244),
     num_classes: int = 3,
     use_cache: bool = False,
 ):
 
     tuner = keras_tuner.RandomSearch(
-        hypermodel=MyHyperModel(model_name, channels, num_classes, image_size),
+        hypermodel=MyHyperModel(model_name, input_channels, num_classes, image_size),
         objective="val_accuracy",
         max_trials=3,
         executions_per_trial=2,
@@ -97,9 +96,10 @@ def run(
         directory="tuner_results",
         project_name=model_name,
     )
-    (train_ds, val_ds) = create_datasets()
+    (train_ds, val_ds) = create_datasets(training_folder_path)
 
     best_model = _get_best_model(tuner, train_ds, val_ds, use_cache)
 
+    print("Hyperparameters optimized. Training data with best model.")
     history = _train(best_model, train_ds, val_ds)
     plot_training_history(history)

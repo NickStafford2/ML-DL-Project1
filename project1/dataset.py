@@ -4,10 +4,6 @@ from tensorflow import data as tf_data
 from keras.utils import to_categorical
 
 
-from .constants import (
-    data_folder_path,
-)
-
 # use this to increase reduce size of dataset for more speed
 # data_augmentation_layers = []
 
@@ -24,14 +20,14 @@ def _data_augmentation(images):
     return images
 
 
-def create_datasets():
+def create_datasets(test_data_path: str):
     train_ds, val_ds = keras.utils.image_dataset_from_directory(
-        data_folder_path,
+        test_data_path,
         validation_split=0.2,
         subset="both",
         seed=1337,
         image_size=(244, 244),
-        batch_size=16,
+        batch_size=32,
     )
 
     train_ds = train_ds.map(

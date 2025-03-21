@@ -3,42 +3,51 @@ import shutil
 import math
 from zipfile import ZipFile
 
-
-from .constants import (
-    class_names,
-    data_folder_path,
-    temp_folder_path,
-    zip_folder_path,
-)
+from project1.constants import FolderPaths
 
 
-def _does_data_exist() -> bool:
+zip_folder_path = "./MLDL_Data_Face"
+class_names = ["Class 1", "Class 2", "Class 3"]
+_temp_folder_path = "./temp"
+
+
+def _does_data_exist(paths: FolderPaths) -> bool:
     for class_name in class_names:
-        class_dir = f"{data_folder_path}/{class_name}"
+        class_dir = f"{paths.training_folder_path}/{class_name}"
         if not os.path.exists(class_dir):
             return False
         if len(os.listdir(class_dir)) == 0:
             return False
+
+    # for class_name in class_names:
+    #     class_dir = f"{paths.test_folder_path}/{class_name}"
+    #     if not os.path.exists(class_dir):
+    #         return False
+    #     if len(os.listdir(class_dir)) == 0:
+    #         return False
     return True
 
 
-def _setup_folders():
-    if not os.path.exists(temp_folder_path):
-        os.makedirs(temp_folder_path)
+def _setup_temp_folder(paths: FolderPaths):
+    _delete_temp()
+    if not os.path.exists(_temp_folder_path):
+        os.makedirs(_temp_folder_path)
+    if not os.path.exists(_temp_folder_path):
+        os.makedirs(_temp_folder_path)
     for class_name in class_names:
-        if not os.path.exists(f"{temp_folder_path}/{class_name}"):
-            os.makedirs(f"{temp_folder_path}/{class_name}")
+        if not os.path.exists(f"{_temp_folder_path}/{class_name}"):
+            os.makedirs(f"{_temp_folder_path}/{class_name}")
 
-    if not os.path.exists(data_folder_path):
-        os.makedirs(data_folder_path)
+    if not os.path.exists(paths.training_folder_path):
+        os.makedirs(paths.training_folder_path)
     for class_name in class_names:
-        if not os.path.exists(f"{data_folder_path}/{class_name}"):
-            os.makedirs(f"{data_folder_path}/{class_name}")
+        if not os.path.exists(f"{paths.training_folder_path}/{class_name}"):
+            os.makedirs(f"{paths.training_folder_path}/{class_name}")
 
 
-def _delete_data_contents():
+def _delete_training_contents(paths: FolderPaths):
     for class_name in class_names:
-        class_dir = f"{data_folder_path}/{class_name}"
+        class_dir = f"{paths.training_folder_path}/{class_name}"
         dir_contents = os.listdir(class_dir)
         for filename in dir_contents:
             file_path = os.path.join(class_dir, filename)
@@ -47,12 +56,8 @@ def _delete_data_contents():
 
 
 def _delete_temp():
-    for class_name in class_names:
-        dir_contents = os.listdir(f"{temp_folder_path}/{class_name}")
-        for folder in dir_contents:
-            path = f"{temp_folder_path}/{class_name}/{folder}"
-            # print(path)
-            shutil.rmtree(path)
+    if os.path.exists(_temp_folder_path):
+        shutil.rmtree(_temp_folder_path)
 
 
 def _unzip_to_temp():
@@ -64,17 +69,17 @@ def _unzip_to_temp():
                 # print(zippedFileNameNoExtension)
                 with ZipFile(f"{zip_folder_path}/{class_name}/{zippedFile}", "r") as z:
                     z.extractall(
-                        f"{temp_folder_path}/{class_name}/{zippedFileNameNoExtension}"
+                        f"{_temp_folder_path}/{class_name}/{zippedFileNameNoExtension}"
                     )
 
 
-def _copy_to_data():
+def _copy_to_training(paths: FolderPaths):
     for class_name in class_names:
         short_class_name = class_name.replace(" ", "")
-        dir_contents = os.listdir(f"{temp_folder_path}/{class_name}")
+        dir_contents = os.listdir(f"{_temp_folder_path}/{class_name}")
         for folder in dir_contents:
             folder_short = folder.replace(".", "").zfill(3)
-            folder_path = f"{temp_folder_path}/{class_name}/{folder}"
+            folder_path = f"{_temp_folder_path}/{class_name}/{folder}"
             folder_contents = os.listdir(folder_path)
             for filename in folder_contents:
                 file = filename.split(".")
@@ -83,18 +88,17 @@ def _copy_to_data():
 
                 old_path = os.path.join(folder_path, filename)
                 new_path = os.path.join(
-                    f"{data_folder_path}/{class_name}",
+                    f"{paths.training_folder_path}/{class_name}",
                     f"{short_class_name}_{folder_short}_{filename_short}",
                 )
                 os.rename(old_path, new_path)
 
 
-def generate_data_from_zip():  # -> list[tuple[np.ndarray, str]]:
-    if _does_data_exist():
+def generate_data_from_zip(paths: FolderPaths):
+    if _does_data_exist(paths):
         return
-    _setup_folders()
-    _delete_temp()
-    _delete_data_contents()
+    _setup_temp_folder(paths)
+    _delete_training_contents(paths)
     _unzip_to_temp()
-    _copy_to_data()
+    _copy_to_training(paths)
     _delete_temp()
