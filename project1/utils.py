@@ -9,9 +9,9 @@ def parse_args():
 
     parser.add_argument(
         "--use_cache",
-        type=bool,
-        default=True,
-        help="Set to False if you want to disable caching (default is True).",
+        action="store_true",
+        default=False,
+        help="Set to if you want to disable caching (default is False).",
     )
     return parser.parse_args()
 
