@@ -21,7 +21,10 @@ def _data_augmentation(images):
 
 
 def create_datasets(
-    training_data_path: str, num_classes: int, image_size: tuple[int, int]
+    training_data_path: str,
+    num_classes: int,
+    image_size: tuple[int, int],
+    color_mode: str = "rgb",
 ):
     train_ds, val_ds = keras.utils.image_dataset_from_directory(
         training_data_path,
@@ -30,9 +33,11 @@ def create_datasets(
         seed=1337,
         image_size=image_size,
         batch_size=24,
+        color_mode=color_mode,
     )
 
     # print(f"size train_ds: {len(train_ds)}")
+    # print(f"train_ds: {train_ds[0]}")
     train_ds = train_ds.map(
         lambda img, label: (
             _data_augmentation(img),
@@ -40,7 +45,6 @@ def create_datasets(
         ),
         num_parallel_calls=tf_data.AUTOTUNE,
     )
-    # print(f"size train_ds: {len(train_ds)}")
     val_ds = val_ds.map(
         lambda img, label: (
             _data_augmentation(img),
@@ -49,6 +53,18 @@ def create_datasets(
         num_parallel_calls=tf_data.AUTOTUNE,
     )
 
+    # for images, labels in train_ds.take(1):  # Taking 1 batch from the train dataset
+    #     print(f"Batch of images shape: {images.shape}")
+    #     print(f"Batch of labels shape: {labels.shape}")
+    #     print(f"First image (flattened): {images[0].numpy()}")
+    #     print(f"First label (one-hot encoded): {labels[0].numpy()}")
+    #
+    # for images, labels in val_ds.take(1):  # Taking 1 batch from the val dataset
+    #     print(f"Batch of images shape: {images.shape}")
+    #     print(f"Batch of labels shape: {labels.shape}")
+    #     print(f"First image (flattened): {images[0].numpy()}")
+    #     print(f"First label (one-hot encoded): {labels[0].numpy()}")
+    #
     # Prefetching samples in GPU memory helps maximize GPU utilization.
     train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
     val_ds = val_ds.prefetch(tf_data.AUTOTUNE)

@@ -1,11 +1,11 @@
+import os
 import keras
 from keras.models import load_model
-import keras_tuner
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from .dataset import create_datasets
-from .model import create_model
+from . import hyperparameters
 
 
 def plot_training_history(history):
@@ -33,20 +33,52 @@ def plot_training_history(history):
     plt.show()
 
 
-def _get_best_model(tuner, train_ds, val_ds, use_cache: bool, cache_dir: str):
-    best_model_file_path = f"{cache_dir}/best_model.keras"
-    if use_cache:
+def _get_best_model(
+    model_name: str,
+    use_cache: bool = False,
+):
+    best_model_file_path = f"./keras_cache/{model_name}/best_model.keras"
+    if use_cache and os.path.exists(best_model_file_path):
+        print("Loading best model from cache...")
         return load_model(best_model_file_path)
+    else:
+        print("No cached model found.")
+        return None
 
-    tuner.search(train_ds, epochs=3, validation_data=val_ds)
+    return None
+    # tuner.search(train_ds, epochs=3, validation_data=val_ds)
+    #
+    # best_model = tuner.get_best_models(1)[0]
+    # best_model.summary()
+    # best_model.save(best_model_file_path)
+    # return best_model
 
-    best_model = tuner.get_best_models(1)[0]
-    best_model.summary()
-    best_model.save(best_model_file_path)
-    return best_model
+
+def _get_model(
+    model_name: str,
+    training_folder_path: str,
+    image_size: tuple[int, int],
+    num_classes: int,
+    input_channels: int = 3,
+    use_cache: bool = False,
+    use_hp_cache: bool = True,
+    color_mode: str = "rgb",
+):
+    if use_cache:
+        return _get_best_model(model_name)
+    return hyperparameters.train(
+        model_name,
+        training_folder_path,
+        image_size,
+        num_classes,
+        input_channels,
+        color_mode,
+        use_hp_cache,
+    )
 
 
-def _train(model, train_ds, val_ds, cache_dir: str):
+def _train(model, train_ds, val_ds, model_name: str):
+    cache_dir = f"./keras_cache/{model_name}"
     log_dir = f"{cache_dir}/logs"
     callbacks = [
         keras.callbacks.ModelCheckpoint(f"{cache_dir}/save_at_{{epoch}}.keras"),
@@ -57,7 +89,7 @@ def _train(model, train_ds, val_ds, cache_dir: str):
         ),
         keras.callbacks.TensorBoard(log_dir=log_dir, profile_batch=50),
     ]
-    epochs = 25
+    epochs = 5  # 25
     with tf.profiler.experimental.Profile(log_dir):
         history = model.fit(
             train_ds,
@@ -68,25 +100,6 @@ def _train(model, train_ds, val_ds, cache_dir: str):
     return history
 
 
-class MyHyperModel(keras_tuner.HyperModel):
-    def __init__(self, model_name, input_channels, num_classes, image_size) -> None:
-        self._model_name = model_name
-        self._input_channels = input_channels
-        self._num_classes = num_classes
-        self._image_size = image_size
-        super().__init__()
-
-    def build(self, hp):
-        # Tune hyperparameters inside `create_model` using Keras Tuner's `HyperParameters` object
-        model = create_model(
-            hp,
-            input_shape=self._image_size + (self._input_channels,),
-            num_classes=self._num_classes,
-            model_name=self._model_name,
-        )
-        return model
-
-
 def run(
     model_name: str,
     training_folder_path: str,
@@ -94,24 +107,30 @@ def run(
     num_classes: int,
     input_channels: int = 3,
     use_cache: bool = False,
+    use_hp_cache: bool = True,
+    color_mode: str = "rgb",
 ):
-    cache_dir = f"./tuner_results/{model_name}"
 
-    tuner = keras_tuner.RandomSearch(
-        hypermodel=MyHyperModel(model_name, input_channels, num_classes, image_size),
-        objective="val_accuracy",
-        max_trials=10,
-        executions_per_trial=3,
-        overwrite=True,
-        directory=cache_dir,
-        project_name=model_name,
+    print("creating CNN model")
+    model = _get_model(
+        model_name,
+        training_folder_path,
+        image_size,
+        num_classes,
+        input_channels,
+        use_cache,
+        use_hp_cache,
+        color_mode,
     )
-    (train_ds, val_ds) = create_datasets(training_folder_path, num_classes, image_size)
-
-    best_model = _get_best_model(
-        tuner, train_ds, val_ds, use_cache, cache_dir=cache_dir
-    )
-
     print("Hyperparameters optimized. Training data with best model.")
-    history = _train(best_model, train_ds, val_ds, cache_dir)
-    plot_training_history(history)
+
+    if model:
+        model.summary()
+
+        (train_ds, val_ds) = create_datasets(
+            training_folder_path, num_classes, image_size, color_mode=color_mode
+        )
+
+        history = _train(model, train_ds, val_ds, model_name)
+        plot_training_history(history)
+    print("Model could not be found")

@@ -1,14 +1,14 @@
 best_model.keras
 
-
-
 temp/
 data/
 MLDL_Data_Face/
 data.zip
 emotion_data/
 tuner_results/
+tuner_results_old/
 keras_cache/
+keras_cache_old/
 logs/
 
 # Byte-compiled / optimized / DLL files

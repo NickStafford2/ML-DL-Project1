@@ -7,6 +7,7 @@ if __name__ == "__main__":
     model_name = "part1"
     paths = constants.get_data_folder(model_name)
     file_list = setup_part1_data.generate_data_from_zip(paths)
+    print(args.use_cache)
     cnn.run(
         model_name,
         input_channels=1,
@@ -14,4 +15,5 @@ if __name__ == "__main__":
         image_size=(48, 48),
         num_classes=7,
         use_cache=args.use_cache,
+        color_mode="grayscale",
     )

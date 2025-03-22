@@ -12,7 +12,11 @@ def _add_separable_convolution(nn, num_filters: int):
     convolution and then merges the three outputs together for a single output. 
     Great explanation here: https://www.youtube.com/watch?v=T7o3xvJLuHk
     """
-    nn = layers.SeparableConv2D(filters=num_filters, kernel_size=3, padding="same")(nn)
+    nn = layers.SeparableConv2D(
+        filters=num_filters,
+        kernel_size=3,
+        padding="same",
+    )(nn)
     nn = layers.BatchNormalization()(nn)
     return nn
 
@@ -87,12 +91,12 @@ def _classification_layers(hp, nn, num_classes: int):
         nn = layers.GlobalAveragePooling2D()(nn)
 
     nn = layers.Dense(
-        520,
+        8000,
         activation="relu",
     )(nn)
 
     nn = layers.Dense(
-        220,
+        1000,
         activation="relu",
     )(nn)
     # Number of Dense layers will be decided by the hyperparameter
@@ -145,6 +149,7 @@ def create_model(
     num_classes: int = 3,
     model_name: str = "part2",
 ):
+    print(f"input_shape: {input_shape}")
     inputs = keras.Input(shape=input_shape)
 
     nn = _initialization_layers(inputs)
