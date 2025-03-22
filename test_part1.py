@@ -1,34 +1,33 @@
 # reads from the cmdline and file and load saved model and run predict
 
-import PIL
 import cv2
 import numpy as np
-
-# from somewhere import saved_model_pt1
-from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-# model = load_model("best_model.zip")
-model = load_model("../best_model.keras")
+model = load_model("./best_model_part1.keras")
 
 image_name = input(
     "enter the name of your image placed in root directory(with extension):"
 )
-image_path = f"/workspaces/ML-DL-Project1/{image_name}"
-# image = Image.open(image_path)
-# image = image.resize()
+
+# replace this with your local path
+image_path = f"ML-DL-Project1/pyrightconfig.json"
 image = cv2.imread(image_path)
-image = cv2.resize(image, (224, 224))
-image = image.reshape(1, 224, 224, 3)
+image = cv2.resize(image, (48, 48))
+image = image.reshape(1, 48, 48, 1)
 
 image_tensor = np.asarray(image)
 print(image_tensor.shape)
 probability_values = model.predict(image_tensor)
 predicted_class = np.argmax(probability_values)
 class_names = {
-    0: "Class 1 Hands with Touch",
-    1: "Class 2 No hands",
-    2: "Class 3 Hands without Touch",
+    0: "angry",
+    1: "disgust",
+    2: "fear",
+    3: "happy",
+    4: "neutral",
+    5: "sad",
+    6: "surprise",
 }
 print("predicted class: ", class_names[int(predicted_class)])
